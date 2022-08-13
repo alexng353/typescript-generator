@@ -363,14 +363,26 @@ fn main() {
     println!();
 
     let dir = env::current_dir().unwrap();
+    println!("Installing dependencies...");
 
-    // run npm install inside the package folder
-    let mut child = Command::new("npm")
-        .arg("install")
-        .current_dir(dir.join(package.clone()))
-        .spawn()
-        .unwrap();
-    child.wait().unwrap();
+    if cfg!(target_os = "windows") {
+        let mut child = Command::new("cmd")
+            .arg("/c")
+            .arg("npm install")
+            .current_dir(&dir.join(&package))
+            .spawn()
+            .unwrap();
+        child.wait().unwrap();
+    } else {
+        let mut child = Command::new("npm")
+            .arg("install")
+            .current_dir(&dir.join(&package))
+            .spawn()
+            .unwrap();
+        child.wait().unwrap();
+    };
+    println!("{}", format!("\x1b[32m{}\x1b[0m", "\n\nDependencies installed\n\n"));
+
 
     println!("Package {} created successfully!", package);
     // red print that says "You need to install nodemon if you don't have it"
