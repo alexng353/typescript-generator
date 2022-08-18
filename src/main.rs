@@ -22,8 +22,7 @@ fn package_json_init(package: String, author: String) {
     if !package_regex.is_match(&package) {
         panic!(
             r#"Package Name does not match the pattern of "^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$".
-        tl;dr: Package can't have capitals, underscores, or dashes
-        "#
+        tl;dr: Package can't have capitals, underscores, or dashes"#
         );
     }
 
@@ -79,10 +78,8 @@ fn app_ts_init(package: String) {
     fs::create_dir_all(format!("./{}/src", package)).unwrap();
 
     let mut app_ts_file: File = File::create(format!("./{}/src/app.ts", package)).unwrap();
-    let app_ts: String = r#"
-import logger from "./utils/logger";
-logger.info("Hello World!");
-"#
+    let app_ts: String = r#"import logger from "./utils/logger";
+logger.info("Hello World!");"#
     .to_string();
     app_ts_file.write_all(app_ts.as_bytes()).unwrap();
     println!("app.ts file created");
@@ -105,8 +102,7 @@ const logger = pino({
 });
 
 
-export default logger;
-    "#
+export default logger;"#
     .to_string();
     logger_file.write_all(logger_ts.as_bytes()).unwrap();
     println!("logger.ts file created");
@@ -219,9 +215,7 @@ fn tsconfig_json_init(package: String) {
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   }
-}
-      "#
-    .to_string();
+}"#.to_string();
     tsconfig_json_file
         .write_all(tsconfig_json.as_bytes())
         .unwrap();
@@ -282,8 +276,7 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"#,
+SOFTWARE."#,
         current_year, author
     )
     .to_string();
@@ -299,8 +292,7 @@ fn readme_init(package: String) {
 ## Development
  - Run `npm run dev` to start development.
 ## Production
- - Run `npm run start` to start the app.
-    "#
+ - Run `npm run start` to start the app."#
     .to_string();
     let mut readme_file = File::create(format!("./{}/README.md", package)).unwrap();
     readme_file.write_all(readme.as_bytes()).unwrap();
