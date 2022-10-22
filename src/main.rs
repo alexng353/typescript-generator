@@ -7,7 +7,6 @@ use std::{
 
 use regex::Regex;
 
-
 fn prompt(prompt: &str) -> String {
     let mut s: String = String::new();
     print!("{}", prompt);
@@ -44,12 +43,14 @@ fn package_json_init(package: String, author: String) {
   "license": "{}",
   "author": "{}",
   "description": "",
-  "main": "src/main.ts",
+  "main": "src/app.ts",
   "scripts": {{
     "dev": "nodemon --config nodemon.json src/app.ts",
     "start": "node src/app.ts"
   }},
   "dependencies": {{
+    "dotenv": "^16.0.3",
+    "node-fetch": "^2.6.7",
     "pino": "^8.1.0"
   }},
   "devDependencies": {{
@@ -79,8 +80,10 @@ fn app_ts_init(package: String) {
 
     let mut app_ts_file: File = File::create(format!("./{}/src/app.ts", package)).unwrap();
     let app_ts: String = r#"import logger from "./utils/logger";
+import dotenv from "dotenv";
+dotenv.config();
 logger.info("Hello World!");"#
-    .to_string();
+        .to_string();
     app_ts_file.write_all(app_ts.as_bytes()).unwrap();
     println!("app.ts file created");
 }
@@ -103,7 +106,7 @@ const logger = pino({
 
 
 export default logger;"#
-    .to_string();
+        .to_string();
     logger_file.write_all(logger_ts.as_bytes()).unwrap();
     println!("logger.ts file created");
 }
@@ -293,10 +296,31 @@ fn readme_init(package: String) {
  - Run `npm run dev` to start development.
 ## Production
  - Run `npm run start` to start the app."#
-    .to_string();
+        .to_string();
     let mut readme_file = File::create(format!("./{}/README.md", package)).unwrap();
     readme_file.write_all(readme.as_bytes()).unwrap();
     println!("README created");
+}
+
+fn env_init(package: String) {
+    println!("Initializing .env... (./{}/.env)", package);
+    let env = r#""#.to_string();
+    let mut env_file = File::create(format!("./{}/.env", package)).unwrap();
+    env_file.write_all(env.as_bytes()).unwrap();
+    println!(".env created");
+}
+
+fn gigignore_init(package: String) {
+    println!("Initializing .gitignore... (./{}/.gitignore)", package);
+    let gitignore = r#"node_modules/
+dist/
+coverage/
+.env
+"#
+    .to_string();
+    let mut gitignore_file = File::create(format!("./{}/.gitignore", package)).unwrap();
+    gitignore_file.write_all(gitignore.as_bytes()).unwrap();
+    println!(".gitignore created");
 }
 
 fn main() {
@@ -355,6 +379,12 @@ fn main() {
     readme_init(package.clone());
     println!();
 
+    env_init(package.clone());
+    println!();
+
+    gigignore_init(package.clone());
+    println!();
+
     let dir = env::current_dir().unwrap();
     println!("Installing dependencies...");
 
@@ -374,8 +404,33 @@ fn main() {
             .unwrap();
         child.wait().unwrap();
     };
-    println!("{}", format!("\x1b[32m{}\x1b[0m", "\n\nDependencies installed\n\n"));
+    println!(
+        "{}",
+        format!("\x1b[32m{}\x1b[0m", "\n\nDependencies installed\n\n")
+    );
+    // run git init
+    println!("Initializing git repository...");
 
+    if cfg!(target_os = "windows") {
+        let mut child = Command::new("cmd")
+            .arg("/c")
+            .arg("git init")
+            .current_dir(&dir.join(&package))
+            .spawn()
+            .unwrap();
+        child.wait().unwrap();
+    } else {
+        let mut child = Command::new("git")
+            .arg("init")
+            .current_dir(&dir.join(&package))
+            .spawn()
+            .unwrap();
+        child.wait().unwrap();
+    };
+    println!(
+        "{}",
+        format!("\x1b[32m{}\x1b[0m", "\n\nGit repository initialized\n\n")
+    );
 
     println!("Package {} created successfully!", package);
     // red print that says "You need to install nodemon if you don't have it"
