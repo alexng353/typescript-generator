@@ -3,6 +3,7 @@ use std::{
     fs::{self, File},
     io::{self, Write},
     process::Command,
+    time::Instant,
 };
 
 use regex::Regex;
@@ -356,6 +357,8 @@ coverage/
 }
 
 fn main() {
+    // start timer
+    let start = Instant::now();
     let args: Vec<String> = env::args().collect();
     let mut yes = false;
     // see if there is a -y flag
@@ -489,11 +492,20 @@ fn main() {
     let red_text: String = "\x1b[31m".to_string();
     let end_code: String = "\x1b[0m".to_string();
     println!();
-    println!();
     // println!("You need to install nodemon if you don't have it");
     println!(
         "{}You need to install nodemon if you don't have it{}",
         blue_text, end_code
     );
     println!("{}yarn global add nodemon{}", red_text, end_code);
+    // end timer, print time elapsed
+    let duration = start.elapsed();
+    println!();
+    println!(
+        "Time elapsed:{} {}.{:03} seconds{}",
+        "\x1b[32m",
+        duration.as_secs(),
+        duration.subsec_millis(),
+        end_code
+    );
 }
