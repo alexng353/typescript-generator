@@ -25,15 +25,17 @@ fn package_json_init(package: String, author: String) {
         );
     }
 
-    let mut version: String = prompt("Version (1.0.0): ");
-    let regex: Regex = Regex::new(r"^\d+\.\d+\.\d+$").unwrap();
-    if version.len() == 0 {
-        version = "1.0.0".to_string();
-    }
-    if !regex.is_match(&version) {
-        println!("Invalid version provided, defaulting to 1.0.0");
-        version = "1.0.0".to_string();
-    }
+    let version: String = "1.0.0".to_owned();
+
+    // let mut version: String = prompt("Version (1.0.0): ");
+    // let regex: Regex = Regex::new(r"^\d+\.\d+\.\d+$").unwrap();
+    // if version.len() == 0 {
+    //     version = "1.0.0".to_string();
+    // }
+    // if !regex.is_match(&version) {
+    //     println!("Invalid version provided, defaulting to 1.0.0");
+    //     version = "1.0.0".to_string();
+    // }
     println!("Initializing package.json... (./{}/package.json)", package);
 
     let package_json: String = format!(
@@ -49,15 +51,17 @@ fn package_json_init(package: String, author: String) {
     "start": "node src/app.ts"
   }},
   "dependencies": {{
-    "dotenv": "^16.0.3",
-    "node-fetch": "^2.6.7",
+    "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "pino": "^8.1.0"
   }},
   "devDependencies": {{
+    "@types/cors": "^2.8.13",
     "@types/express": "^4.17.13",
     "@types/node": "^18.0.0",
     "@types/node-fetch": "^2.6.2",
-    "pino-pretty": "^8.1.0",
+    "pino-pretty": "^9.1.1",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.4"
   }}
@@ -93,17 +97,45 @@ fn logger_init(package: String) {
     // mkdir ./package/src/utils
     fs::create_dir_all(format!("./{}/src/utils", package)).unwrap();
     let mut logger_file: File = File::create(format!("./{}/src/utils/logger.ts", package)).unwrap();
-    let logger_ts: String = r#"import pino from 'pino';
+    let logger_ts: String = r#"import pino from "pino";
+import pretty from "pino-pretty";
 
-const logger = pino({
-  transport: {
-    target: 'pino-pretty'
-  },
+function GetEmojiByTime(stamp: number) {
+  const time = new Date(stamp)
+    .toLocaleTimeString("en-CA", {
+      timeZone: "America/Vancouver",
+    })
+    .split(":");
+
+  const hour = parseInt(time[0]);
+  const minute = parseInt(time[1]);
+
+  const stringmoji = "🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦";
+  const moji = stringmoji.match(/.{1,2}/g) || [];
+  const moji00 = moji.filter((_, index) => index % 2 === 0);
+  const moji30 = moji.filter((_, index) => index % 2 !== 0);
+
+  if (minute < 30) {
+    return moji00[hour == 12 ? 0 : hour];
+  } else {
+    return moji30[hour == 12 ? 0 : hour];
+  }
+}
+
+const stream = pretty({
   customPrettifiers: {
-    time: (timestamp : any) => `🕰 ${timestamp}`,
+    time: (timestamp: any) =>
+      `${GetEmojiByTime(timestamp)} ${new Date(timestamp).toLocaleString(
+        "en-CA",
+        {
+          timeZone: "America/Vancouver",
+        }
+      )}`,
   },
+  colorize: true,
 });
 
+const logger = pino({}, stream);
 
 export default logger;"#
         .to_string();
@@ -129,7 +161,7 @@ fn tsconfig_json_init(package: String) {
     // "disableReferencedProjectLoad": true,             /* Reduce the number of projects loaded automatically by TypeScript. */
   
     /* Language and Environment */
-    "target": "es2016",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "target": "ESNext",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     // "lib": [],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
     // "jsx": "preserve",                                /* Specify what JSX code is generated. */
     // "experimentalDecorators": true,                   /* Enable experimental support for TC39 stage 2 draft decorators. */
@@ -167,7 +199,7 @@ fn tsconfig_json_init(package: String) {
     // "emitDeclarationOnly": true,                      /* Only output d.ts files and not JavaScript files. */
     // "sourceMap": true,                                /* Create source map files for emitted JavaScript files. */
     // "outFile": "./",                                  /* Specify a file that bundles all outputs into one JavaScript file. If 'declaration' is true, also designates a file that bundles all .d.ts output. */
-    // "outDir": "./",                                   /* Specify an output folder for all emitted files. */
+    "outDir": "./out",                                   /* Specify an output folder for all emitted files. */
     // "removeComments": true,                           /* Disable emitting comments. */
     // "noEmit": true,                                   /* Disable emitting files from a compilation. */
     // "importHelpers": true,                            /* Allow importing helper functions from tslib once per project, instead of including them per-file. */
@@ -293,9 +325,9 @@ fn readme_init(package: String) {
     let readme = r#"# APP NAME
 ### App initialized by @alexng353/typescript-generator
 ## Development
- - Run `npm run dev` to start development.
+ - Run `yarn dev` to start development.
 ## Production
- - Run `npm run start` to start the app."#
+ - Run `yarn start` to start the app."#
         .to_string();
     let mut readme_file = File::create(format!("./{}/README.md", package)).unwrap();
     readme_file.write_all(readme.as_bytes()).unwrap();
@@ -333,6 +365,21 @@ fn main() {
         }
     }
 
+    let mut noauthor = false;
+    for arg in args.iter() {
+        if arg == "-a" {
+            noauthor = true;
+        }
+    }
+
+    // check for the name of the package, every arg except for -y
+    let mut package = String::new();
+    for arg in args.iter() {
+        if arg != "-y" && arg != "-a" {
+            package = arg.to_string();
+        }
+    }
+
     println!("This applciation will help you to create a new TypeScript project.");
     println!("It also generates an MIT license file and a README.md file.");
     println!("");
@@ -346,15 +393,18 @@ fn main() {
         }
     }
 
-    let package: String = prompt("Package name: ");
-    if package.len() == 0 {
-        panic!("No package name provided");
+    if package.len() == 0 && package != "." {
+        package = prompt("Package name: ");
     }
-    let author: String = prompt("Author: ");
-    if author.len() == 0 {
-        panic!("No author name provided");
+
+    let mut author = "alexng353".to_owned();
+    if !noauthor {
+        author = prompt("Author: ");
+        if author.len() == 0 {
+            author = "alexng353".to_owned();
+        }
     }
-    // mkdir ./EduBeyond
+
     fs::create_dir_all(format!("./{}", package)).unwrap();
     println!();
 
@@ -391,19 +441,19 @@ fn main() {
     if cfg!(target_os = "windows") {
         let mut child = Command::new("cmd")
             .arg("/c")
-            .arg("npm install")
+            .arg("yarn")
             .current_dir(&dir.join(&package))
             .spawn()
             .unwrap();
         child.wait().unwrap();
     } else {
-        let mut child = Command::new("npm")
-            .arg("install")
+        let mut child = Command::new("yarn")
             .current_dir(&dir.join(&package))
             .spawn()
             .unwrap();
         child.wait().unwrap();
     };
+
     println!(
         "{}",
         format!("\x1b[32m{}\x1b[0m", "\n\nDependencies installed\n\n")
@@ -445,5 +495,5 @@ fn main() {
         "{}You need to install nodemon if you don't have it{}",
         blue_text, end_code
     );
-    println!("{}npm i -g nodemon{}", red_text, end_code);
+    println!("{}yarn global add nodemon{}", red_text, end_code);
 }
