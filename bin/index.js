@@ -1,7 +1,6 @@
 #! /usr/bin/env node
 
 const os = require("os");
-console.log(os.platform());
 const child = require("child_process");
 
 const platform = os.platform();
