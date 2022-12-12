@@ -1,0 +1,22 @@
+{
+  "name": "typescript-generator",
+  "version": "1.0.0",
+  "description": "Typescript Generator is a utility that aims to increase time savings when generating a nodejs-typescript app.",
+  "main": "index.js",
+  "bin": {
+    "typescript-generator": "bin/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexng353/typescript-generator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alexng353/typescript-generator/issues"
+  },
+  "homepage": "https://github.com/alexng353/typescript-generator#readme"
+}
