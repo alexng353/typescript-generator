@@ -1,25 +1,36 @@
 #! /usr/bin/env node
 
-const os = require('os');
+const os = require("os");
 console.log(os.platform());
 const child = require("child_process");
 
 const platform = os.platform();
 
 switch (platform) {
-  case 'win32':
-    child.spawn(`${__dirname}/typescript-generator.exe`, process.argv.slice(2), {
-      stdio: "inherit",
-    });
+  case "win32":
+    child.spawn(
+      `${__dirname}/typescript-generator.exe`,
+      process.argv.slice(2),
+      {
+        stdio: "inherit",
+      }
+    );
     break;
-  case 'darwin':
-  case 'linux':
+  case "darwin":
+    child.spawn(
+      `${__dirname}/typescript-generator-M1-osx`,
+      process.argv.slice(2),
+      {
+        stdio: "inherit",
+      }
+    );
+    break;
+  case "linux":
     child.spawn(`${__dirname}/typescript-generator`, process.argv.slice(2), {
       stdio: "inherit",
     });
     break;
   default:
-    console.log('Unsupported platform');
+    console.log("Unsupported platform");
     break;
 }
-
