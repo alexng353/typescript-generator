@@ -112,9 +112,7 @@ fn readme_init(package: String) {
 
 fn env_init(package: String) {
     println!("Initializing .env... (./{}/.env)", package);
-    let env = r#""#.to_string();
-    let mut env_file = File::create(format!("./{}/.env", package)).unwrap();
-    env_file.write_all(env.as_bytes()).unwrap();
+    File::create(format!("./{}/.env", package)).unwrap();
     println!(".env created");
 }
 
